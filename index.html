@@ -2,27 +2,40 @@
 include 'config.php'; // include admin email
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $to = $admin_email; 
-    $subject = "🛒 New Order from Moaiad Store";
+    // check if it's an order or contact message
+    if (isset($_POST["cart"])) {
+        $to = $admin_email; 
+        $subject = "🛒 New Order from Moaiad Store";
 
-    $message = "New Order Details:\n\n";
-    foreach ($_POST as $key => $value) {
-        if ($key == "cart") {
-            $cartItems = json_decode($value, true);
-            $message .= "Cart:\n";
-            foreach ($cartItems as $item) {
-                $message .= "- " . $item["product"] . " : $" . $item["price"] . "\n";
+        $message = "New Order Details:\n\n";
+        foreach ($_POST as $key => $value) {
+            if ($key == "cart") {
+                $cartItems = json_decode($value, true);
+                $message .= "Cart:\n";
+                foreach ($cartItems as $item) {
+                    $message .= "- " . $item["product"] . " : $" . $item["price"] . "\n";
+                }
+            } else {
+                $message .= ucfirst($key) . ": " . $value . "\n";
             }
-        } else {
-            $message .= ucfirst($key) . ": " . $value . "\n";
         }
+
+        mail($to, $subject, $message);
+        echo "<h2 style='text-align:center; font-family:Arial'>✅ Order Confirmed! Details sent to admin email</h2>";
+        exit;
+    } elseif (isset($_POST["contact_message"])) {
+        $to = $admin_email;
+        $subject = "📩 New Contact Message from Moaiad Store";
+
+        $message = "Message Details:\n\n";
+        $message .= "Name: " . $_POST["contact_name"] . "\n";
+        $message .= "Email: " . $_POST["contact_email"] . "\n";
+        $message .= "Message:\n" . $_POST["contact_message"] . "\n";
+
+        mail($to, $subject, $message);
+        echo "<h2 style='text-align:center; font-family:Arial'>✅ Your message has been sent! We'll reply soon.</h2>";
+        exit;
     }
-
-    // send mail
-    mail($to, $subject, $message);
-
-    echo "<h2 style='text-align:center; font-family:Arial'>✅ Order Confirmed! Details sent to admin email</h2>";
-    exit;
 }
 ?>
 
@@ -43,6 +56,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <nav>
     <button onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})"
       class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg">Shop Now</button>
+    <button onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})"
+      class="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-lg ml-2">About Us</button>
+    <button onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})"
+      class="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg ml-2">Contact</button>
     <button onclick="toggleCart()" class="relative ml-4 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg">
       🛒 Cart (<span id="cart-count">0</span>)
     </button>
@@ -69,67 +86,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <button onclick="addToCart('iPhone Cover 2',170)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">Add to Cart</button>
     </div>
   </div>
-
-  <!-- Samsung Covers -->
-  <h3 class="text-2xl font-semibold mb-6">Samsung Covers</h3>
-  <div class="grid md:grid-cols-3 gap-6 mb-12">
-    <div class="bg-white rounded-xl shadow-lg p-4 text-center">
-      <img src="https://via.placeholder.com/300" alt="Samsung Cover" class="mx-auto rounded-lg mb-4">
-      <h4 class="font-bold">Samsung Cover 1</h4>
-      <p class="text-gray-600 mb-2">$120</p>
-      <button onclick="addToCart('Samsung Cover 1',120)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">Add to Cart</button>
-    </div>
-    <div class="bg-white rounded-xl shadow-lg p-4 text-center">
-      <img src="https://via.placeholder.com/300" alt="Samsung Cover" class="mx-auto rounded-lg mb-4">
-      <h4 class="font-bold">Samsung Cover 2</h4>
-      <p class="text-gray-600 mb-2">$140</p>
-      <button onclick="addToCart('Samsung Cover 2',140)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">Add to Cart</button>
-    </div>
-  </div>
-
-  <!-- Fancy Covers -->
-  <h3 class="text-2xl font-semibold mb-6">Fancy Covers</h3>
-  <div class="grid md:grid-cols-3 gap-6">
-    <div class="bg-white rounded-xl shadow-lg p-4 text-center">
-      <img src="https://via.placeholder.com/300" alt="Fancy Cover" class="mx-auto rounded-lg mb-4">
-      <h4 class="font-bold">Fancy Cover 1</h4>
-      <p class="text-gray-600 mb-2">$200</p>
-      <button onclick="addToCart('Fancy Cover 1',200)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">Add to Cart</button>
-    </div>
-  </div>
 </section>
 
-<!-- Cart -->
-<div id="cart" class="fixed right-6 top-20 w-96 bg-white shadow-2xl rounded-xl p-4 hidden z-50">
-  <h3 class="text-xl font-bold mb-4">Your Cart</h3>
-  <ul id="cart-items" class="space-y-2 mb-4"></ul>
-  <p class="font-bold">Total: $<span id="cart-total">0</span></p>
-  
-  <!-- Checkout Form -->
-  <form method="POST" class="mt-4 space-y-3">
-    <input type="hidden" name="cart" id="cart-data">
+<!-- About Us -->
+<section id="about" class="py-12 px-6 bg-gray-100">
+  <h2 class="text-4xl font-bold text-center mb-6">About Us</h2>
+  <p class="text-center max-w-3xl mx-auto text-lg text-gray-700">
+    Welcome to <span class="font-bold">Moaiad Store</span> 🎉.  
+    We specialize in high-quality phone covers (iPhone, Samsung, and fancy designs) that combine style with protection.  
+    Our mission is to provide customers with durable, trendy, and affordable accessories that make their devices stand out.  
+  </p>
+</section>
 
-    <input type="text" name="name" placeholder="Full Name" class="w-full p-2 border rounded" required>
-    <input type="email" name="email" placeholder="Email" class="w-full p-2 border rounded" required>
-    <input type="text" name="phone" placeholder="Phone Number" class="w-full p-2 border rounded" required>
-    <input type="text" name="address" placeholder="Shipping Address" class="w-full p-2 border rounded" required>
-
-    <select name="payment" id="payment-method" class="w-full p-2 border rounded" onchange="toggleCardForm()" required>
-      <option value="">Select Payment Method</option>
-      <option value="Cash on Delivery">Cash on Delivery</option>
-      <option value="Visa Card">Visa Card</option>
-    </select>
-
-    <!-- Visa Form -->
-    <div id="card-form" class="hidden space-y-2">
-      <input type="text" name="card_number" placeholder="Card Number" class="w-full p-2 border rounded">
-      <input type="text" name="expiry" placeholder="Expiry Date (MM/YY)" class="w-full p-2 border rounded">
-      <input type="text" name="cvv" placeholder="CVV" class="w-full p-2 border rounded">
-    </div>
-
-    <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">Confirm Order</button>
+<!-- Contact Us -->
+<section id="contact" class="py-12 px-6">
+  <h2 class="text-4xl font-bold text-center mb-6">Contact Us</h2>
+  <form method="POST" class="max-w-xl mx-auto space-y-4 bg-white p-6 rounded-xl shadow-lg">
+    <input type="text" name="contact_name" placeholder="Your Name" class="w-full p-2 border rounded" required>
+    <input type="email" name="contact_email" placeholder="Your Email" class="w-full p-2 border rounded" required>
+    <textarea name="contact_message" placeholder="Your Message" rows="4" class="w-full p-2 border rounded" required></textarea>
+    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg">Send Message</button>
   </form>
-</div>
+</section>
 
 <!-- Footer -->
 <footer class="bg-gray-900 text-white text-center py-6 mt-12">
@@ -177,17 +155,32 @@ function toggleCart() {
   cartBox.classList.toggle("hidden");
   gsap.from(cartBox, {y:-50, opacity:0, duration:0.5});
 }
-
-function toggleCardForm() {
-  let payment = document.getElementById("payment-method").value;
-  let cardForm = document.getElementById("card-form");
-  if(payment === "Visa Card"){
-    cardForm.classList.remove("hidden");
-  } else {
-    cardForm.classList.add("hidden");
-  }
-}
 </script>
+
+<!-- Cart -->
+<div id="cart" class="fixed right-6 top-20 w-96 bg-white shadow-2xl rounded-xl p-4 hidden z-50">
+  <h3 class="text-xl font-bold mb-4">Your Cart</h3>
+  <ul id="cart-items" class="space-y-2 mb-4"></ul>
+  <p class="font-bold">Total: $<span id="cart-total">0</span></p>
+  
+  <!-- Checkout Form -->
+  <form method="POST" class="mt-4 space-y-3">
+    <input type="hidden" name="cart" id="cart-data">
+
+    <input type="text" name="name" placeholder="Full Name" class="w-full p-2 border rounded" required>
+    <input type="email" name="email" placeholder="Email" class="w-full p-2 border rounded" required>
+    <input type="text" name="phone" placeholder="Phone Number" class="w-full p-2 border rounded" required>
+    <input type="text" name="address" placeholder="Shipping Address" class="w-full p-2 border rounded" required>
+
+    <select name="payment" id="payment-method" class="w-full p-2 border rounded" required>
+      <option value="">Select Payment Method</option>
+      <option value="Cash on Delivery">Cash on Delivery</option>
+      <option value="Visa Card">Visa Card</option>
+    </select>
+
+    <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">Confirm Order</button>
+  </form>
+</div>
 
 </body>
 </html>
