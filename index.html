@@ -1,3 +1,31 @@
+<?php
+include 'config.php'; // include admin email
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $to = $admin_email; 
+    $subject = "🛒 New Order from Moaiad Store";
+
+    $message = "New Order Details:\n\n";
+    foreach ($_POST as $key => $value) {
+        if ($key == "cart") {
+            $cartItems = json_decode($value, true);
+            $message .= "Cart:\n";
+            foreach ($cartItems as $item) {
+                $message .= "- " . $item["product"] . " : $" . $item["price"] . "\n";
+            }
+        } else {
+            $message .= ucfirst($key) . ": " . $value . "\n";
+        }
+    }
+
+    // send mail
+    mail($to, $subject, $message);
+
+    echo "<h2 style='text-align:center; font-family:Arial'>✅ Order Confirmed! Details sent to admin email</h2>";
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -72,32 +100,36 @@
 </section>
 
 <!-- Cart -->
-<div id="cart" class="fixed right-6 top-20 w-80 bg-white shadow-2xl rounded-xl p-4 hidden z-50">
+<div id="cart" class="fixed right-6 top-20 w-96 bg-white shadow-2xl rounded-xl p-4 hidden z-50">
   <h3 class="text-xl font-bold mb-4">Your Cart</h3>
   <ul id="cart-items" class="space-y-2 mb-4"></ul>
   <p class="font-bold">Total: $<span id="cart-total">0</span></p>
-  <button onclick="checkout()" class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">Checkout</button>
-</div>
+  
+  <!-- Checkout Form -->
+  <form method="POST" class="mt-4 space-y-3">
+    <input type="hidden" name="cart" id="cart-data">
 
-<!-- Contact -->
-<section id="contact" class="bg-white py-12 px-6">
-  <h3 class="text-3xl font-bold text-center mb-6">Contact Us</h3>
-  <form class="max-w-2xl mx-auto space-y-4">
-    <input type="text" placeholder="Your Name" class="w-full p-3 rounded-lg border border-gray-300">
-    <input type="email" placeholder="Your Email" class="w-full p-3 rounded-lg border border-gray-300">
-    <textarea placeholder="Your Message" class="w-full p-3 rounded-lg border border-gray-300"></textarea>
-    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">Send</button>
+    <input type="text" name="name" placeholder="Full Name" class="w-full p-2 border rounded" required>
+    <input type="email" name="email" placeholder="Email" class="w-full p-2 border rounded" required>
+    <input type="text" name="phone" placeholder="Phone Number" class="w-full p-2 border rounded" required>
+    <input type="text" name="address" placeholder="Shipping Address" class="w-full p-2 border rounded" required>
+
+    <select name="payment" id="payment-method" class="w-full p-2 border rounded" onchange="toggleCardForm()" required>
+      <option value="">Select Payment Method</option>
+      <option value="Cash on Delivery">Cash on Delivery</option>
+      <option value="Visa Card">Visa Card</option>
+    </select>
+
+    <!-- Visa Form -->
+    <div id="card-form" class="hidden space-y-2">
+      <input type="text" name="card_number" placeholder="Card Number" class="w-full p-2 border rounded">
+      <input type="text" name="expiry" placeholder="Expiry Date (MM/YY)" class="w-full p-2 border rounded">
+      <input type="text" name="cvv" placeholder="CVV" class="w-full p-2 border rounded">
+    </div>
+
+    <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">Confirm Order</button>
   </form>
-</section>
-
-<!-- Location -->
-<section id="location" class="py-12 px-6 bg-gray-100">
-  <h3 class="text-3xl font-bold text-center mb-6">Our Location</h3>
-  <div class="max-w-4xl mx-auto rounded-xl overflow-hidden shadow-lg">
-    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3452.6211162743626!2d31.23571111511504!3d30.044419381880846!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1458413d0c1e0b97%3A0x3f3fbbab6140f8a!2sCairo!5e0!3m2!1sen!2seg!4v1616000000000!5m2!1sen!2seg"
-      width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-  </div>
-</section>
+</div>
 
 <!-- Footer -->
 <footer class="bg-gray-900 text-white text-center py-6 mt-12">
@@ -117,6 +149,7 @@ function updateCart() {
   let cartItems = document.getElementById("cart-items");
   let cartTotal = document.getElementById("cart-total");
   let cartCount = document.getElementById("cart-count");
+  let cartData = document.getElementById("cart-data");
 
   cartItems.innerHTML = "";
   let total = 0;
@@ -131,6 +164,7 @@ function updateCart() {
   });
   cartTotal.innerText = total;
   cartCount.innerText = cart.length;
+  cartData.value = JSON.stringify(cart);
 }
 
 function removeFromCart(index) {
@@ -144,11 +178,14 @@ function toggleCart() {
   gsap.from(cartBox, {y:-50, opacity:0, duration:0.5});
 }
 
-function checkout() {
-  alert("Thank you for shopping at Moaiad Store! 🛍️");
-  cart = [];
-  updateCart();
-  toggleCart();
+function toggleCardForm() {
+  let payment = document.getElementById("payment-method").value;
+  let cardForm = document.getElementById("card-form");
+  if(payment === "Visa Card"){
+    cardForm.classList.remove("hidden");
+  } else {
+    cardForm.classList.add("hidden");
+  }
 }
 </script>
 
